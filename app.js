@@ -41,8 +41,8 @@ io.on('connection', function (socket) {
 
 
 // get building list accroding to village id
-  socket.on('get-queue-list', function  (villageId) {
-  	var currentVillage = buildHash[villageId];
+  socket.on('get-queue-list', function  (data) {
+  	var currentVillage = buildHash[data.villageId];
 
   	socket.emit('get-queue-list', {
   		buildList: (currentVillage) ? currentVillage.buildQueue : [],
@@ -61,7 +61,7 @@ io.on('connection', function (socket) {
 
   socket.on('trigger-auto-building', function  (data) {
   	Utils.triggerAutoBuilding(autoBuildCtrl, data, buildHash, {io: io, socket: socket});
-  })
+  });
 
 // get build hash - for testing
   socket.on('get-info', function  () {
@@ -69,7 +69,7 @@ io.on('connection', function (socket) {
   		autoBuildCtrl: autoBuildCtrl,
   		buildHash: buildHash
   	});
-  })
+  });
 
 
   socket.on('disconnect', function () {
@@ -78,4 +78,4 @@ io.on('connection', function (socket) {
 });
 
 // Expose app
-exports = module.exports = app;
+module.exports = app;

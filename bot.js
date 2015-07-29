@@ -26,19 +26,22 @@ function getBuildDetail(id) {
       $ = cheerio.load(body);
       if ($("form[name=login]").length) {
         // on the login page, need to log in
-        login($);
+        login($, function(){
+          getBuildDetail(id);
+        });
         return;
       }
-      console.log(333, $(".titleInHeader").text())
+      console.log(333, $(".titleInHeader").text(), $("#contract .clocks").text())
     }
   });
 }
-function login($) {
+function login($, cb) {
   accountSettings.login = $("form[name=login] input[name=login]").val();
   request.post({url: rootUrl + 'dorf1.php', form: accountSettings}, function (err, httpResponse, body) {
     if (!err) {
       $ = cheerio.load(body);
       console.log("successfully logged in", $("form[name=login]").length, $("#sidebarBoxHero").length);
+      cb.apply(this, arguments);
     } else {
       console.log(err, httpResponse);
     }
@@ -48,7 +51,7 @@ function login($) {
 console.log('run');
 
 
-getBuildDetail(8);
+//getBuildDetail(8);
 
 setTimeout(function () {
   getBuildDetail(5);
