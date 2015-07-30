@@ -28,7 +28,7 @@ server.listen(config.port, config.ip, function () {
 
 
 
-var Utils = require("./utils");
+var Controller = require("./controller");
 var autoBuildCtrl = {};
 var buildHash = {};
 
@@ -52,15 +52,15 @@ io.on('connection', function (socket) {
 
 // add build details obj to buildHash accordingly to the village id
   socket.on('add-to-queue', function  (data) {
-  	Utils.addToQueue(data, buildHash);
+  	Controller.addToQueue(data, buildHash);
   });
 // remove build from the queue
   socket.on('remove-from-queue', function  (data) {
-  	Utils.removeFromQueue(data, buildHash);
+  	Controller.removeFromQueue(data, buildHash);
   });
 
   socket.on('trigger-auto-building', function  (data) {
-  	Utils.triggerAutoBuilding(autoBuildCtrl, data, buildHash, {io: io, socket: socket});
+  	Controller.triggerAutoBuilding(autoBuildCtrl, data, buildHash, {io: io, socket: socket});
   });
 
 // get build hash - for testing
