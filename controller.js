@@ -39,7 +39,6 @@ Controller.triggerAutoBuilding = function (ctrl, data, buildHash, comunication) 
     var instance = ctrl[currentVillageId].instance;
 
     if (buildHash[currentVillageId].isLoop) {
-        instance.test();
          instance.notifyUser("info", buildHash[currentVillageId].name, 'auto-building started');
          instance.start(data.timer);
     } else {

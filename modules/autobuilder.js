@@ -59,7 +59,6 @@ module.exports = {
             });
         }
 
-
         var login = function login(isLoggedIn, $, callback) {
             if (isLoggedIn) {
                 console.log('not loged in')
@@ -147,11 +146,17 @@ module.exports = {
             // TODO: implement io.emit
         }
 
-		function notifyUser(type, title, message){
-		    // send messge for toastr
-		    // TODO: io.emit("")
-		    console.log(type, title, message);
-		  }
+        function notifyUser(type, title, message) {
+            // send messge for toastr
+            // TODO: io.emit("")
+            console.log(type, title, message);
+
+            comunication.io.emit('auto-build-event', {
+                type: type,
+                title: title,
+                message: message
+            });
+        }
 
 
 		function stopRecursive () {
@@ -193,9 +198,6 @@ module.exports = {
             timerId = setTimeout(startRecursive, time);
         }
         return {
-            test: function() {
-                console.log("activate", buildList, buildingObj, villageName)
-            },
             stop: stopRecursive,
             start: start,
             notifyUser: notifyUser
