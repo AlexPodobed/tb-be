@@ -3,45 +3,34 @@ var Utils = require("./utils.js");
 var request = require('request');
 var cheerio = require('cheerio');
 var async = require('async');
+var colors = require('colors');
+
 var Q = require('q');
 
-var rootUrl = "http://tx3.travian.co.uk/";
+
 var j = request.jar(new FileCookieStore('./cookies.json'));
-var accountSettings = {
-  name: "aridon2",
-  password: "podobed123",
-  s1: "Login",
-  w: "1366:768"
-};
-
-
+var accountSettings = require('../config/accounSettings.js');
+var rootUrl = "http://tx3.travian.co.uk/";
 var $;
+
+var colorHash = {
+    "success": 'green',
+    "info": "blue",
+    "error": "red"
+};
 
 request = request.defaults({ jar : j });
 
-
-
-
-
-
-
-
 module.exports = {
-	/* comunication - > {io, socket}*/
 	autoBuilderConstructor: function  (buildHash, villageId, comunication) {
 		var buildList = buildHash[villageId].buildQueue;
 		var buildingObj = buildHash[villageId];
 		var villageName = buildHash[villageId].name;
-		var parseStringToDate = Utils.parseStringToDate;
 		var iterator = Utils.Iterator(buildList);
 		var timerId;
 
-
-
-
-
         var checkLogIn = function checkLogIn(callback) {
-            console.log("checkLogIn")
+            console.log("checkLogIn".gray)
             request(rootUrl + "dorf1.php", function(error, response, body) {
                 if (!error && response.statusCode == 200) {
                     $ = cheerio.load(body);
@@ -57,11 +46,11 @@ module.exports = {
                     // error
                 }
             });
-        }
+        };
 
         var login = function login(isLoggedIn, $, callback) {
             if (isLoggedIn) {
-                console.log('not loged in')
+                console.log('not loged in'.gray)
                 accountSettings.login = $("form[name=login] input[name=login]").val();
                 request.post({
                     url: rootUrl + 'dorf1.php',
@@ -69,37 +58,35 @@ module.exports = {
                 }, function(err, httpResponse, body) {
                     if (!err) {
                         $ = cheerio.load(body);
-                        console.log("successfully logged in", $("form[name=login]").length, $("#sidebarBoxHero").length);
+                        console.log("successfully logged in".cyan, $("form[name=login]").length, $("#sidebarBoxHero").length);
                         callback(null);
                     } else {
                         // error
                     }
                 });
             } else {
-                console.log('loged in')
+                console.log('loged in'.gray)
                 callback(null);
             }
-        }
+        };
 
         var getBuildDetail = function getBuildDetail(build) {
-
             return function(callback) {
-                console.log('getBuildDetail')
+                console.log('getBuildDetail'.gray)
                 request(rootUrl + "build.php?newdid=" +villageId+ "&id="+build.id, function(error, response, body) {
                     if (!error && response.statusCode == 200) {
                         $ = cheerio.load(body);
                         callback(null, $);
                     } else {
                         // error
-                        console.log('error')
+                        console.log('error'.red)
                     }
                 });
             }
-        }
+        };
 
         var checkBuildingsDetails = function checkBuildingsDetails($, callback) {
-
-            console.log('checkBuildingsDetails')
+            console.log('checkBuildingsDetails'.gray)
 
             var $btn = $("#contract button").first();
 
@@ -112,9 +99,9 @@ module.exports = {
                     url: buildIrl
                 });
             } else {
-                console.log("error")
+                console.log("error".red)
                 var errorObj = {
-                    message: " something went wrong",
+                    message: " something went wrong"
                 };
                 if ($btn.attr('value') === "Exchange resources") {
                     errorObj.message = " not enough resources";
@@ -126,10 +113,10 @@ module.exports = {
 
                 callback(errorObj)
             }
-        }
+        };
 
         var build = function build(obj, callback) {
-            console.log('build', obj);
+            console.log('build:'.blue, Utils.getCurrentTime());
             request(rootUrl + obj.url, function(error, response, body) {
                 if (!error && response.statusCode == 200) {
                     callback(null, obj);
@@ -137,19 +124,16 @@ module.exports = {
                     // error
                 }
             })
-        }
+        };
 
         function removeBuiltField(currentObj) {
             iterator.index -= 1;
             Utils.removeElementFromList(buildList, currentObj.id);
-            // sendMessage("tb-remove-from-list", currentObj.id);
-            // TODO: implement io.emit
+            comunication.io.emit("remove-from-list", {villageId: villageId, buildId: currentObj.id});
         }
 
         function notifyUser(type, title, message) {
-            // send messge for toastr
-            // TODO: io.emit("")
-            console.log(type, title, message);
+            console.log(colors[colorHash[type]].bold(type, title, message));
 
             comunication.io.emit('auto-build-event', {
                 type: type,
@@ -163,14 +147,18 @@ module.exports = {
 			buildingObj.isLoop = false;
 		    iterator.reset();
 		    clearTimeout(timerId);
-		    //  TODO: send message to client
 		}
-
+        function errorHandler(err){
+            console.log(Utils.getCurrentTime(), err);
+            stopRecursive();
+            notifyUser('error', villageName, err.message);
+        }
         function startRecursive() {
             if (iterator.hasNext() && buildingObj.isLoop) {
                 var currentObj = iterator.next();
 
-                console.log("Iterator Index:", iterator.index, iterator);
+                console.log(colors.yellow(new Array(80).join("-"))); // remove it
+                console.log("Iterator Index:", iterator.index);
 
                 async.waterfall([
                     checkLogIn,
@@ -180,13 +168,13 @@ module.exports = {
                     build
                 ], function(err, result) {
                     if (err) {
-                        console.log(err);
+                        errorHandler(err);
                         return
                     }
                     removeBuiltField(currentObj);
                     notifyUser('success', villageName, currentObj.name + " successfully started building");
                     timerId = setTimeout(startRecursive, result.timer + 2000);
-                    console.log(new Array(80).join("-")); // remove it
+                    console.log(colors.yellow(new Array(80).join("-"))); // remove it
                 });
             } else {
                 notifyUser('info', "auto-build", "FINISHED");
@@ -203,4 +191,4 @@ module.exports = {
             notifyUser: notifyUser
         }
     }
-}
+};

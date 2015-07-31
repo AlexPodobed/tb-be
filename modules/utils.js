@@ -62,5 +62,7 @@ Utils.getIdformUrl = function (str, match) {
     });
     return id;
 };
-
+Utils.getCurrentTime = function(){
+    return new Date().toTimeString();
+};
 module.exports = Utils;

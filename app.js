@@ -15,7 +15,7 @@ mongoose.connect(config.mongo.uri, config.mongo.options);
 
 var app = express();
 var server = require('http').createServer(app);
-var io = socketio(80);
+var io = socketio.listen(server);
 
 
 require('./config/express')(app);
@@ -31,14 +31,16 @@ server.listen(config.port, config.ip, function () {
 var Controller = require("./controller");
 var autoBuildCtrl = {};
 var buildHash = {};
+var shared = require('./shared');
+
+console.log(shared);
+
 
 
 
 io.on('connection', function (socket) {
 	// send message to all connected people
   io.emit('this', { will: 'be received by everyone'});
-
-
 
 // get building list accroding to village id
   socket.on('get-queue-list', function  (data) {
@@ -53,14 +55,26 @@ io.on('connection', function (socket) {
 // add build details obj to buildHash accordingly to the village id
   socket.on('add-to-queue', function  (data) {
   	Controller.addToQueue(data, buildHash);
+    Controller.addToQueue(data, shared.buildHash);
+
+    console.log(shared);
+    var currentVillage = buildHash[data.villageId];
+    socket.broadcast.emit("add-to-queue-all", {
+      villageId: data.villageId,
+      buildList: (currentVillage) ? currentVillage.buildQueue : [],
+      isLoop: (currentVillage) ? currentVillage.isLoop : false
+    });
   });
 // remove build from the queue
   socket.on('remove-from-queue', function  (data) {
   	Controller.removeFromQueue(data, buildHash);
+  	Controller.removeFromQueue(data, shared.buildHash);
+    socket.broadcast.emit("remove-from-list", data);
   });
 
   socket.on('trigger-auto-building', function  (data) {
   	Controller.triggerAutoBuilding(autoBuildCtrl, data, buildHash, {io: io, socket: socket});
+    io.emit('trigger-auto-building', {villageId: data.villageId, isLoopActive: data.isLoopActive});
   });
 
 // get build hash - for testing
