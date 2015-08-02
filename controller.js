@@ -40,7 +40,11 @@ Controller.triggerAutoBuilding = function (ctrl, data, buildHash, comunication) 
 
     if (buildHash[currentVillageId].isLoop) {
          instance.notifyUser("info", buildHash[currentVillageId].name, 'auto-building started');
-         instance.start(data.timer);
+         if(data.timer){
+             instance.start(data.timer);
+         }else {
+             instance.startBlind();
+         }
     } else {
         instance.notifyUser("info", buildHash[currentVillageId].name, 'auto-building stopped');
         instance.stop();

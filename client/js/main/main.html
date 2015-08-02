@@ -13,7 +13,11 @@
                 </li>
             </div>
             <div class="panel-body text-center">
-                <button type="button" class="btn" ng-class="{'btn-warning':village.isLoop, 'btn-success': !village.isLoop}">{{village.isLoop?"Stop":"Start"}}</button>
+                <button type="button" class="btn"
+                        ng-click="triggerAutoBuilding(villageId, village)"
+                        ng-class="{'btn-warning':village.isLoop, 'btn-success': !village.isLoop}">
+                    {{village.isLoop?"Stop":"Start"}}
+                </button>
             </div>
         </div>
     </div>

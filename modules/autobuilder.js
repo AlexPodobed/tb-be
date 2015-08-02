@@ -29,6 +29,8 @@ module.exports = {
 		var iterator = Utils.Iterator(buildList);
 		var timerId;
 
+        var timeToFinish;
+
         var checkLogIn = function checkLogIn(callback) {
             console.log("checkLogIn".gray)
             request(rootUrl + "dorf1.php", function(error, response, body) {
@@ -58,14 +60,16 @@ module.exports = {
                 }, function(err, httpResponse, body) {
                     if (!err) {
                         $ = cheerio.load(body);
-                        console.log("successfully logged in".cyan, $("form[name=login]").length, $("#sidebarBoxHero").length);
+                        timeToFinish = Utils.parseStringToDate($('.buildingList #timer1').text());
+                        console.log("successfully logged in".cyan);
                         callback(null);
                     } else {
                         // error
                     }
                 });
             } else {
-                console.log('loged in'.gray)
+                timeToFinish = Utils.parseStringToDate($('.buildingList #timer1').text());
+                console.log('loged in'.gray);
                 callback(null);
             }
         };
@@ -107,6 +111,7 @@ module.exports = {
                     errorObj.message = " not enough resources";
                 } else if ($btn.attr('value') === "Construct with master builder") {
                     errorObj.message = " not finished upgrading";
+                    errorObj.status = 1;
                 } else if ($("#contract >span.none").length) {
                     errorObj.message = " has been fully upgraded";
                 }
@@ -183,11 +188,27 @@ module.exports = {
         }
         function start(delay) {
             var time = Utils.parseStringToDate(delay);
-            timerId = setTimeout(startRecursive, time);
+            timerId = setTimeout(startRecursive, time+2000);
+        }
+
+        function startBlind(){
+            async.waterfall([
+                checkLogIn,
+                login
+            ], function(err, result) {
+                if (err) {
+                    errorHandler(err);
+                    return
+                }
+                console.log(timeToFinish);
+                timerId = setTimeout(startRecursive, (timeToFinish +2000 || 0));
+                console.log(colors.yellow(new Array(80).join("-"))); // remove it
+            });
         }
         return {
             stop: stopRecursive,
             start: start,
+            startBlind: startBlind,
             notifyUser: notifyUser
         }
     }

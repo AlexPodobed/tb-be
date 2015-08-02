@@ -8,6 +8,16 @@ angular.module("tb-bot")
             console.log(villageId, buildingId);
         };
 
+        $scope.triggerAutoBuilding = function(villageId, village){
+            village.isLoop = !village.isLoop;
+
+            socket.emit('trigger-auto-building', {
+                villageId: villageId,
+                isLoopActive: village.isLoop
+            });
+        };
+
+
         Bot.getAllDetails.get(function (res) {
             $scope.shared.buildHash = res.data.buildHash;
         });
