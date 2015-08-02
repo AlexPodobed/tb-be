@@ -29,35 +29,29 @@ server.listen(config.port, config.ip, function () {
 
 
 var Controller = require("./controller");
-var autoBuildCtrl = {};
-var buildHash = {};
 var shared = require('./shared');
+var autoBuildCtrl = shared.autoBuildCtrl;
+var buildHash = shared.buildHash;
 
 console.log(shared);
 
 
-
-
 io.on('connection', function (socket) {
-	// send message to all connected people
-  io.emit('this', { will: 'be received by everyone'});
 
 // get building list accroding to village id
-  socket.on('get-queue-list', function  (data) {
-  	var currentVillage = buildHash[data.villageId];
+  socket.on('get-queue-list', function (data) {
+    var currentVillage = buildHash[data.villageId];
 
-  	socket.emit('get-queue-list', {
-  		buildList: (currentVillage) ? currentVillage.buildQueue : [],
-  		isLoop: (currentVillage) ? currentVillage.isLoop : false
-  	});
+    socket.emit('get-queue-list', {
+      buildList: (currentVillage) ? currentVillage.buildQueue : [],
+      isLoop: (currentVillage) ? currentVillage.isLoop : false
+    });
   });
 
 // add build details obj to buildHash accordingly to the village id
-  socket.on('add-to-queue', function  (data) {
-  	Controller.addToQueue(data, buildHash);
-    Controller.addToQueue(data, shared.buildHash);
+  socket.on('add-to-queue', function (data) {
+    Controller.addToQueue(data, buildHash);
 
-    console.log(shared);
     var currentVillage = buildHash[data.villageId];
     socket.broadcast.emit("add-to-queue-all", {
       villageId: data.villageId,
@@ -66,23 +60,22 @@ io.on('connection', function (socket) {
     });
   });
 // remove build from the queue
-  socket.on('remove-from-queue', function  (data) {
-  	Controller.removeFromQueue(data, buildHash);
-  	Controller.removeFromQueue(data, shared.buildHash);
+  socket.on('remove-from-queue', function (data) {
+    Controller.removeFromQueue(data, buildHash);
     socket.broadcast.emit("remove-from-list", data);
   });
 
-  socket.on('trigger-auto-building', function  (data) {
-  	Controller.triggerAutoBuilding(autoBuildCtrl, data, buildHash, {io: io, socket: socket});
+  socket.on('trigger-auto-building', function (data) {
+    Controller.triggerAutoBuilding(autoBuildCtrl, data, buildHash, {io: io, socket: socket});
     io.emit('trigger-auto-building', {villageId: data.villageId, isLoopActive: data.isLoopActive});
   });
 
 // get build hash - for testing
-  socket.on('get-info', function  () {
-  	socket.emit('get-info', {
-  		autoBuildCtrl: autoBuildCtrl,
-  		buildHash: buildHash
-  	});
+  socket.on('get-info', function () {
+    socket.emit('get-info', {
+      autoBuildCtrl: autoBuildCtrl,
+      buildHash: buildHash
+    });
   });
 
 

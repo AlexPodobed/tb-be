@@ -1,7 +1,7 @@
 var shared = function shared(){
     this.autoBuildCtrl = {};
     this.buildHash = {};
-    this.rootUrl = "some Url";
+    this.rootUrl = "http://tx3.travian.co.uk/";
 
     if(shared.caller != shared.getInstance){
         throw new Error("This object cannot be instanciated");

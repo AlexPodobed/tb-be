@@ -1,0 +1,20 @@
+<h2>Building details:</h2>
+<hr/>
+<div class="row">
+    <div class="col-md-4" ng-repeat="(villageId, village) in shared.buildHash" ng-if="village.buildQueue.length">
+        <div class="panel panel-primary">
+            <div class="panel-heading">{{village.name}}</div>
+            <div class="panel-body list-group">
+                <li class="list-group-item" ng-repeat="build in village.buildQueue">
+                    {{$index+1}}. {{build.name}}
+                    <a  class="pull-right" ng-click="removeBuilding(villageId, build.id)">
+                        <span class="glyphicon glyphicon-remove"></span>
+                    </a>
+                </li>
+            </div>
+            <div class="panel-body text-center">
+                <button type="button" class="btn" ng-class="{'btn-warning':village.isLoop, 'btn-success': !village.isLoop}">{{village.isLoop?"Stop":"Start"}}</button>
+            </div>
+        </div>
+    </div>
+</div>
