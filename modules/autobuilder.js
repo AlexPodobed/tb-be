@@ -49,7 +49,6 @@ module.exports = {
                 }
             });
         };
-
         var login = function login(isLoggedIn, $, callback) {
             if (isLoggedIn) {
                 console.log('not loged in'.gray)
@@ -60,7 +59,7 @@ module.exports = {
                 }, function(err, httpResponse, body) {
                     if (!err) {
                         $ = cheerio.load(body);
-                        timeToFinish = Utils.parseStringToDate($('.buildingList #timer1').text());
+                        //timeToFinish = Utils.parseStringToDate($('.buildingList #timer1').text());
                         console.log("successfully logged in".cyan);
                         callback(null);
                     } else {
@@ -68,12 +67,11 @@ module.exports = {
                     }
                 });
             } else {
-                timeToFinish = Utils.parseStringToDate($('.buildingList #timer1').text());
+                //timeToFinish = Utils.parseStringToDate($('.buildingList #timer1').text());
                 console.log('loged in'.gray);
                 callback(null);
             }
         };
-
         var getBuildDetail = function getBuildDetail(build) {
             return function(callback) {
                 console.log('getBuildDetail'.gray)
@@ -88,7 +86,19 @@ module.exports = {
                 });
             }
         };
-
+        var checkTimeToFinish = function(callback) {
+            console.log('checkTimeToFinish'.gray);
+            request(rootUrl + "build.php?newdid=" +villageId, function(error, response, body) {
+                if (!error && response.statusCode == 200) {
+                    $ = cheerio.load(body);
+                    timeToFinish = Utils.parseStringToDate($('.buildingList #timer1').text());
+                    callback(null, timeToFinish);
+                } else {
+                    // error
+                    console.log('error'.red)
+                }
+            });
+        };
         var checkBuildingsDetails = function checkBuildingsDetails($, callback) {
             console.log('checkBuildingsDetails'.gray)
 
@@ -119,7 +129,6 @@ module.exports = {
                 callback(errorObj)
             }
         };
-
         var build = function build(obj, callback) {
             console.log('build:'.blue, Utils.getCurrentTime());
             request(rootUrl + obj.url, function(error, response, body) {
@@ -136,7 +145,6 @@ module.exports = {
             Utils.removeElementFromList(buildList, currentObj.id);
             comunication.io.emit("remove-from-list", {villageId: villageId, buildId: currentObj.id});
         }
-
         function notifyUser(type, title, message) {
             console.log(colors[colorHash[type]].bold(type, title, message));
 
@@ -146,7 +154,6 @@ module.exports = {
                 message: message
             });
         }
-
 
 		function stopRecursive () {
 			buildingObj.isLoop = false;
@@ -194,14 +201,14 @@ module.exports = {
         function startBlind(){
             async.waterfall([
                 checkLogIn,
-                login
+                login,
+                checkTimeToFinish
             ], function(err, result) {
                 if (err) {
                     errorHandler(err);
                     return
                 }
-                console.log(timeToFinish);
-                timerId = setTimeout(startRecursive, (timeToFinish +2000 || 0));
+                timerId = setTimeout(startRecursive, (result +2000 || 0));
                 console.log(colors.yellow(new Array(80).join("-"))); // remove it
             });
         }
